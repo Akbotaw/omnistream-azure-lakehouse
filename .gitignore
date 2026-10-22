@@ -5,14 +5,12 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-
 # Environment & Secrets
 .env
 *.tfstate
 *.tfstate.*
 .terraform/
 *.tfvars
-
 # Spark, Delta & dbt local artifacts
 metastore_db/
 spark-warehouse/
@@ -20,6 +18,5 @@ derby.log
 dbt_lakehouse/target/
 dbt_lakehouse/dbt_packages/
 dbt_lakehouse/logs/
-
 # Databricks Asset Bundles
 .databricks/
