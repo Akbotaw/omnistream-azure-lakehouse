@@ -20,3 +20,6 @@ dbt_lakehouse/dbt_packages/
 dbt_lakehouse/logs/
 # Databricks Asset Bundles
 .databricks/
+# Local CDC landing zone & Debezium offsets
+cdc_simulator/landing_zone/
+cdc_simulator/debezium/data/

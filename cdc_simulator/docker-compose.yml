@@ -1,0 +1,79 @@
+services:
+  postgres_oltp:
+    image: postgres:16-alpine
+    container_name: omnistream_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: cdc_user
+      POSTGRES_PASSWORD: cdc_password
+      POSTGRES_DB: omnistream_oltp
+    # Enable logical replication (wal_level=logical) required for Debezium CDC
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+      - "-c"
+      - "max_wal_senders=10"
+      - "-c"
+      - "max_replication_slots=10"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cdc_user -d omnistream_oltp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: omnistream_kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      # Modern KRaft mode configuration (no ZooKeeper required)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # PLAINTEXT (9092) for internal Docker containers; EXTERNAL (29092) for local Mac host / Spark
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  debezium:
+    image: quay.io/debezium/server:2.6
+    container_name: omnistream_debezium
+    depends_on:
+      postgres_oltp:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./debezium/application.properties:/debezium/conf/application.properties
+      - ./debezium/data:/debezium/data
+
+  kafka_ui:
+    image: redpandadata/console:v2.6.0
+    container_name: omnistream_kafka_ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_BROKERS: kafka:9092
+
+volumes:
+  pg_data:
