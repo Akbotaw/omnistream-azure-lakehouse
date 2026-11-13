@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "omnistream-azure-lakehouse"
+version = "0.1.0"
+description = "End-to-End Azure Databricks Lakehouse with CDC, PySpark, Delta Lake, dbt, Airflow, and MCP"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyspark==3.5.3",
+    "delta-spark==3.2.1",
+    "psycopg2-binary>=2.9.9",
+    "pydantic>=2.9.0",
+    "requests>=2.32.0",
+]
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "chispa>=0.10.1",
+    "ruff>=0.7.0",
+]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "ai_mcp*"]
