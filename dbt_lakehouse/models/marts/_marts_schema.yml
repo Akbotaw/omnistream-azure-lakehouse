@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: dim_listings
+    description: "Current active Airbnb listings dimension table (filtered from SCD Type 2)"
+    columns:
+      - name: listing_id
+        description: "Primary key of the Airbnb listing"
+        data_tests:
+          - unique
+          - not_null
+      - name: price_per_night
+        data_tests:
+          - not_null
+
+  - name: fct_bookings
+    description: "Fact table of Airbnb bookings normalized to USD currency"
+    columns:
+      - name: booking_id
+        data_tests:
+          - unique
+          - not_null
+      - name: listing_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_listings')
+              field: listing_id
+      - name: booking_status
+        data_tests:
+          - accepted_values:
+              values: ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED']
+      - name: total_amount_usd
+        data_tests:
+          - not_null
+
+  - name: mart_city_revenue
+    description: "Executive city-level revenue and cancellation KPI mart"
+    columns:
+      - name: city
+        data_tests:
+          - unique
+          - not_null

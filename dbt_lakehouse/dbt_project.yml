@@ -1,0 +1,10 @@
+name: "omnistream_dbt"
+version: "1.0.0"
+config-version: 2
+profile: "omnistream_dbt"
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+models:
+  omnistream_dbt:
+    +materialized: table
