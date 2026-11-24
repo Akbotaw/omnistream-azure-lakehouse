@@ -19,23 +19,23 @@ An end-to-end, production-style **Data Lakehouse** built on **Azure & Databricks
 ```mermaid
 flowchart LR
     subgraph Source["1. Transactional Source & Log-Based CDC"]
-        PG[("PostgreSQL 16\n(wal_level=logical\nREPLICA IDENTITY FULL)")] -->|pgoutput WAL Slot| DBZ["Debezium Server 2.6"]
-        DBZ -->|JSON CDC Envelopes| KAFKA[["Apache Kafka 3.8 (KRaft)\n/ Azure Event Hubs"]]
+        PG[("PostgreSQL 16 (WAL Logical)")] -->|"pgoutput WAL Slot"| DBZ["Debezium Server 2.6"]
+        DBZ -->|"JSON CDC Envelopes"| KAFKA[["Apache Kafka 3.8 (KRaft) / Azure Event Hubs"]]
     end
 
     subgraph Lakehouse["2. Azure Databricks & Delta Lake (Unity Catalog + ADLS Gen2)"]
-        KAFKA -->|PySpark Structured Streaming\ntrigger(availableNow=True)| BRONZE[("Bronze Layer\nImmutable Raw CDC Payloads")]
-        BRONZE -->|LSN Deduplication, Quarantine,\nDelta MERGE & SCD Type 2| SILVER[("Silver Layer\nlistings (SCD2) | bookings (SCD1)\npayments (SCD1) | _quarantine")]
-        SILVER -->|dbt Core / dbt-databricks\n+ Currency Normalization| GOLD[("Gold Layer (Star Schema)\ndim_listings | fct_bookings\nmart_city_revenue")]
+        KAFKA -->|"PySpark Structured Streaming (availableNow)"| BRONZE[("Bronze Layer: Raw CDC Payloads")]
+        BRONZE -->|"LSN Deduplication, Quarantine, MERGE & SCD2"| SILVER[("Silver Layer: listings (SCD2), bookings & payments (SCD1)")]
+        SILVER -->|"dbt Core / dbt-databricks + USD Normalization"| GOLD[("Gold Layer: dim_listings, fct_bookings, mart_city_revenue")]
     end
 
     subgraph Ops["3. Orchestration, Quality & AI Tooling"]
-        AIRFLOW["Apache Airflow\n(Datasets, Dynamic Tasks, Deferrable Ops)"] --> BRONZE
+        AIRFLOW["Apache Airflow (Datasets, Dynamic Tasks, Deferrable Ops)"] --> BRONZE
         AIRFLOW --> SILVER
         AIRFLOW --> GOLD
-        PYTEST["Automated Testing\n(pytest + chispa + dbt test)"] --> SILVER
+        PYTEST["Automated Testing (pytest + chispa + dbt test)"] --> SILVER
         PYTEST --> GOLD
-        MCP["FastMCP Lakehouse Server\n& AI Edge-Case Generator"] <--> GOLD
+        MCP["FastMCP Lakehouse Server & AI Test Generator"] <--> GOLD
     end
 ```
 
