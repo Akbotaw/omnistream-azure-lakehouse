@@ -1,7 +1,0 @@
-README.md
-pyproject.toml
-omnistream_azure_lakehouse.egg-info/PKG-INFO
-omnistream_azure_lakehouse.egg-info/SOURCES.txt
-omnistream_azure_lakehouse.egg-info/dependency_links.txt
-omnistream_azure_lakehouse.egg-info/requires.txt
-omnistream_azure_lakehouse.egg-info/top_level.txt

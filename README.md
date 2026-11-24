@@ -10,7 +10,7 @@
 ![Airflow](https://img.shields.io/badge/Apache_Airflow-Orchestration-017CEE?logo=apacheairflow&logoColor=white)
 ![Tests](https://img.shields.io/badge/Tests-pytest_%2B_chispa-0A9EDC?logo=pytest&logoColor=white)
 
-An end-to-end, production-grade **Data Lakehouse** built on **Azure & Databricks**. This platform captures real-time transactional changes (`INSERT`, `UPDATE`, `DELETE`) from an operational **Airbnb PostgreSQL OLTP database** via **Write-Ahead Log (WAL) Change Data Capture (CDC)** using **Debezium** and **Apache Kafka (KRaft) / Azure Event Hubs**, processes them through a **PySpark & Delta Lake Medallion Architecture (`Bronze ➔ Silver`)**, transforms analytical dimensional models in **`dbt` (`Silver ➔ Gold`)**, and integrates **Apache Airflow**, **Unity Catalog**, and **Model Context Protocol (MCP)** AI diagnostics.
+An end-to-end, production-style **Data Lakehouse** built on **Azure & Databricks**. This platform captures real-time transactional changes (`INSERT`, `UPDATE`, `DELETE`) from an operational **Airbnb PostgreSQL OLTP database** via **Write-Ahead Log (WAL) Change Data Capture (CDC)** using **Debezium** and **Apache Kafka (KRaft) / Azure Event Hubs**, processes them through a **PySpark & Delta Lake Medallion Architecture (`Bronze ➔ Silver`)**, transforms analytical dimensional models in **`dbt` (`Silver ➔ Gold`)**, and integrates **Apache Airflow**, **Unity Catalog**, and **Model Context Protocol (MCP)** AI diagnostics.
 
 ---
 
@@ -48,7 +48,7 @@ flowchart LR
    - Configured `debezium.source.decimal.handling.mode=double` to prevent Base64 binary encoding of `NUMERIC(10,2)` financial columns.
 2. **Idempotent PySpark Structured Streaming (`Bronze Layer`)**:
    - Ingests Kafka streams using `.trigger(availableNow=True)` and durable Delta checkpoints (`checkpointLocation`) for cost-efficient, exactly-once incremental micro-batch processing without running 24/7 idle clusters.
-3. **Production CDC Edge-Case Handling (`Silver Layer`)**:
+3. **CDC Edge-Case Handling (`Silver Layer`)**:
    - **Hard Delete Key Preservation (`op = 'd'`)**: Extracts primary keys and attributes via `F.coalesce(F.col("cdc.after.<col>"), F.col("cdc.before.<col>"))` so deleted records (where `after` is `null`) are accurately propagated instead of silently dropped.
    - **In-Batch LSN Deduplication**: Resolves Delta Lake `MULTIPLE_SOURCE_ROW_MATCHING` errors using `Window.partitionBy(pk).orderBy(F.col("lsn").desc(), F.col("ts_ms").desc())` before executing `DeltaTable.merge()`.
    - **Out-of-Order Event Protection**: Enforces `source.lsn >= target.lsn` conditions inside `whenMatchedUpdateAll` and `whenMatchedDelete` so late-arriving network events never overwrite newer state.
@@ -67,7 +67,7 @@ flowchart LR
 
 ```text
 omnistream-azure-lakehouse/
-├── .github/workflows/          # CI/CD pipelines (ruff, pytest, chispa, dbt test, DABs deploy)
+├── .github/workflows/          # CI/CD pipelines: ruff, pytest, chispa, dbt test, DABs deploy (planned)
 ├── cdc_simulator/              # Local Docker CDC stack
 │   ├── docker-compose.yml      # PostgreSQL 16 (logical WAL) + Kafka 3.8 (KRaft) + Debezium 2.6 + Kafka UI
 │   ├── postgres/init.sql       # Airbnb OLTP schema (listings, bookings, payments) & seed data
@@ -83,13 +83,13 @@ omnistream-azure-lakehouse/
 │   └── models/
 │       ├── staging/            # stg_listings, stg_bookings, stg_payments (views)
 │       └── marts/              # dim_listings, fct_bookings, mart_city_revenue + _marts_schema.yml tests
-├── airflow/                    # Apache Airflow DAGs (Datasets, Dynamic Task Mapping, Deferrable operators)
-├── ai_mcp/                     # FastMCP server for Lakehouse diagnostics & Pydantic AI test generation
-├── infra/                      # Terraform modules for Azure (ADLS Gen2, Event Hubs, Unity Catalog)
+├── airflow/                    # Apache Airflow DAGs: Datasets, Dynamic Task Mapping, Deferrable ops (in progress)
+├── ai_mcp/                     # FastMCP server for Lakehouse diagnostics & Pydantic AI test generation (planned)
+├── infra/                      # Terraform modules for Azure: ADLS Gen2, Event Hubs, Unity Catalog (planned)
 ├── tests/                      # Automated test suite
 │   ├── conftest.py             # Session-scoped PySpark fixture with teardown
 │   └── unit/                   # test_bronze.py & test_silver.py (chispa DataFrame assertions)
-├── databricks.yml              # Databricks Asset Bundles (DABs) deployment definition
+├── databricks.yml              # Databricks Asset Bundles (DABs) deployment definition (planned)
 └── pyproject.toml              # Python 3.11 packaging & dependencies (setuptools)
 ```
 
